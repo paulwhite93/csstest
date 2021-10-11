@@ -3,7 +3,7 @@
 #include <unistd.h>      // for fork, pipe, dup, close
 #include <stdio.h>       // for NULL, perror
 #include <stdlib.h>      // for exit
-
+#include <string.h>
 #include <iostream>      // for cout
 
 using namespace std;
@@ -20,10 +20,10 @@ int main( int argc, char** argv ) {
     }
     else if ( pid == 0 ) {                              // I'm a child 
         int pid2;
-        if(pipe(fds[0])<0{                              // create a pipe using fds[0]
+        if(pipe(fds[0])<0){                             // create a pipe using fds[0]
             perror("pipe error");
         }
-        dup2(fds[0][0],read);                        //reads from fds[0]
+        dup2(fds[0][0],0);                              //reads from fds[0]
         close(fds[0][1]);
         if((pid2=fork())<0){                            // fork a grand-child
           perror("Fork error on grand-child");
@@ -33,30 +33,36 @@ int main( int argc, char** argv ) {
             if(pipe(fds[1])<0){                         // create a pipe using fds[1]
                 perror("pipe2 error");
             }
-            dup2(fds[1][0],read);
+            dup2(fds[1][0],0);
             close(fds[1][1]);
             close(fds[0][0]);
-            dup2(fds[0][1],write);
+            dup2(fds[0][1],1);
             int pid3;
-            if((pid3 = fork())<0){                        // fork a great-grand-child
+            if((pid3 = fork())<0){                      // fork a great-grand-child
                 perror("Fork error on great-grand-child");
             }
             else if (pid == 0){                         // if I'm a great-grand-child  
-                dup2(fds[1][1],write);
+                dup2(fds[1][1],1);
                 close(fds[1][0]);
-                close(fds[0][1];
-                execlp("ps","ps","-A",NULL);                        // execute "ps"
+                close(fds[0][1]);
+                execlp("ps","-A",NULL);           // execute "ps"
             }
-            else                                            // else if I'm a grand-child
-                execlp("grep","grep",argv[1],NULL);                     // execute "grep"
+            else                                       // else if I'm a grand-child
+                execlp("grep",argv[1],NULL);    // execute "grep"
             }
         else {
                                                         // else if I'm a child
 
-            execlp("wc","wc","-l",NULL);                              // execute "wc"
+            execlp("wc","-l",NULL);               // execute "wc"
         }
+        
     } 
     else {                                              // I'm a parent
+        //make sure pipes are closed
+        close(fds[0][1]);
+        close(fds[0][0]);
+        close(fds[1][0]);
+        close(fds[1][1]);
         wait( NULL );
         cout << "commands completed" << endl;
     }
