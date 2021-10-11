@@ -40,15 +40,15 @@ int main( int argc, char** argv ) {
                 //writes tp fds[0]
                 dup2(fds[0][1],1);
                 close(fds[1][0]);
-                close(fds[0][1]);
+                close(fds[0][0]);
                 close(fds[1][1]);
                 execlp("ps","ps","-A",NULL);           // execute "ps"
             }
             else                                       // else if I'm a grand-child
                 //reads from fds[0] and writes to fds[1]
                 dup2(fds[0][0],0);
-                close(fds[1][1]);
-                close(fds[0][0]);
+                close(fds[1][0]);
+                close(fds[0][1]);
                 dup2(fds[1][1],1);            
                 execlp("grep","grep",argv[1],NULL);    // execute "grep"
             }
@@ -56,7 +56,7 @@ int main( int argc, char** argv ) {
                                                         // else if I'm a child
             //reads from fds[1]
             close(fds[0][1]);
-            close(fds[1][0]);
+            close(fds[0][0]);
             close(fds[1][1]);
             dup2(fds[1][0],0);                              
             execlp("wc","wc","-l",NULL);               // execute "wc"
