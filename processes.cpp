@@ -37,31 +37,38 @@ int main( int argc, char** argv ) {
                 perror("Fork error on great-grand-child");
             }
             else if (pid == 0){                         // if I'm a great-grand-child  
+                //writes tp fds[0]
                 dup2(fds[0][1],1);
                 close(fds[1][0]);
                 close(fds[0][1]);
-                execlp("ps","-A",NULL);           // execute "ps"
+                close(fds[1][1]);
+                execlp("ps","ps","-A",NULL);           // execute "ps"
             }
             else                                       // else if I'm a grand-child
+                //reads from fds[0] and writes to fds[1]
                 dup2(fds[0][0],0);
                 close(fds[1][1]);
                 close(fds[0][0]);
                 dup2(fds[1][1],1);            
-                execlp("grep",argv[1],NULL);    // execute "grep"
+                execlp("grep","grep",argv[1],NULL);    // execute "grep"
             }
         else {
                                                         // else if I'm a child
+            //reads from fds[1]
             close(fds[0][1]);
             close(fds[1][0]);
             close(fds[1][1]);
-            dup2(fds[1][0],0);                              //reads from fds[0]
-            execlp("wc","-l",NULL);               // execute "wc"
+            dup2(fds[1][0],0);                              
+            execlp("wc","wc","-l",NULL);               // execute "wc"
         }
         
     } 
     else {                                              // I'm a parent
         //make sure pipes are closed
+        close(fds[0][1]);
+        close(fds[1][0]);
+        close(fds[1][1]);
+        close(fds[0][0]);
         wait( NULL );
         cout << "commands completed" << endl;
     }
-}
